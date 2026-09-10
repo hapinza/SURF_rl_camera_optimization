@@ -1,6 +1,8 @@
 import PySpin
 
-class camera_controller:
+
+class CameraController:
+
     def __init__(self):
         self.system = PySpin.System.GetInstance()
         self.cam_list = self.system.GetCameras()
@@ -33,7 +35,7 @@ class camera_controller:
         )
         count.SetValue(3)
 
-        # Single frame
+        # Single-frame acquisition
         self.cam.AcquisitionMode.SetValue(
             PySpin.AcquisitionMode_SingleFrame
         )
@@ -64,12 +66,13 @@ class camera_controller:
 
             try:
                 self.cam.EndAcquisition()
-            except:
+            except Exception:
                 pass
 
             return None
 
-    def set_parameter(self, exposure=None, gain=None):
+    def set_parameters(self, exposure=None, gain=None):
+
         if exposure is not None:
             exposure = max(
                 self.cam.ExposureTime.GetMin(),
@@ -91,5 +94,6 @@ class camera_controller:
             self.cam_list.Clear()
             self.system.ReleaseInstance()
             print("camera closed")
+
         except Exception as e:
             print("close error:", e)

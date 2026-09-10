@@ -5,7 +5,7 @@ import numpy as np
 # it doesn't have to return defect probability where it can be obtained by the features in
 # analyzer when it captures the image
 
-class rl_agent:
+class RLAgent:
     def __init__(self, actions, learning_rate = 0.1, discount_factor = 0.9, epsilon = 0.2):
         self.actions = actions  # list 
         
@@ -17,15 +17,17 @@ class rl_agent:
     
     def state_to_key(self, state):
 
-        if isinstance(state, dict):
-            return(
-                round(float(state.get("brightness", 0.0)), 2),
-                round(float(state.get("contrast", 0.0)) , 2),
-                round(float(state.get("sharpness", 0.0)) , 2),
-            )   
-        return tuple(np.round(state, 2)) if isinstance(state, (list, np.ndarray)) else state;
+           if isinstance(state, dict):
+             brightness = self._bucket(float(state.get("brightness", 0.0)), 10)
+             contrast = self._bucket(float(state.get("contrast", 0.0)), 5)
+             sharpness = self._bucket(float(state.get("sharpness", 0.0)), 50)
+             return (brightness, contrast, sharpness)
 
-    
+           if isinstance(state, (list, np.ndarray)):
+                arr = np.array(state, dtype=float)
+                return tuple(arr.astype(int))
+
+           return state
 
     def choose_action(self, state):
         #state with tuble -> imuatble
@@ -63,4 +65,5 @@ class rl_agent:
         new_q = current_q + self.lr*(reward + self.gamma*next_max_q - current_q)
         self.q_table[state_key][action_index] = new_q
 
-        
+    def _bucket(self, value, bucket_size):
+        return int(value // bucket_size) * bucket_size

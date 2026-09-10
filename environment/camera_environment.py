@@ -1,11 +1,12 @@
-from camera.camera_controller import camera_controller
+from camera.CameraController import CameraController
 from processing.image_analyzer import ImageAnalyzer
-from agent.rl_agent import rl_agent
+from agent.RLAgent import RLAgent
 
 
 class CameraEnvironment:
+
     def __init__(self):
-        self.camera = camera_controller()
+        self.camera = CameraController()
         self.analyzer = ImageAnalyzer()
 
         self.actions = [
@@ -16,7 +17,7 @@ class CameraEnvironment:
             {"exposure": 40000},
         ]
 
-        self.agent = rl_agent(self.actions)
+        self.agent = RLAgent(self.actions)
         self.step_count = 0
 
     def step(self):
@@ -31,11 +32,14 @@ class CameraEnvironment:
             }
 
         features = self.analyzer.extract_features(image)
-        defect_prob = self.analyzer.compute_defect_probability(features)
+
+        defect_prob = self.analyzer.compute_defect_probability(
+            features
+        )
 
         action = self.agent.choose_action(features)
 
-        self.camera.set_parameter(**action)
+        self.camera.set_parameters(**action)
 
         image2 = self.camera.capture_image()
 
@@ -47,10 +51,15 @@ class CameraEnvironment:
             }
 
         features2 = self.analyzer.extract_features(image2)
-        defect_prob2 = self.analyzer.compute_defect_probability(features2)
 
-        # improvement = positive reward
-        reward = (defect_prob - defect_prob2) * 10
+        defect_prob2 = self.analyzer.compute_defect_probability(
+            features2
+        )
+
+        reward = self._calculate_reward(
+            defect_prob,
+            defect_prob2
+        )
 
         self.agent.learn(
             features,
@@ -68,6 +77,9 @@ class CameraEnvironment:
             "features_before": features,
             "features_after": features2,
         }
+
+    def _calculate_reward(self, before, after):
+        return (before - after) * 10
 
     def reset(self):
         self.step_count = 0
